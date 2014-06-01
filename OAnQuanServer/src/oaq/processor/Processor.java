@@ -1,7 +1,5 @@
 package oaq.processor;
 
-import javax.swing.ImageIcon;
-
 import oaq.connector.Connector;
 import oaq.database.DataBaseAccessor;
 import oaq.player.Player;
@@ -18,24 +16,14 @@ public abstract class Processor extends Thread {
 		this.start();
 	}
 	
+	protected void disconnect() {
+		databaseAccessor.logout(player.getIdPlayer());
+		player.getConnector().disconnect();
+		getServer().removePlayer(player);
+	}
+	
 	public Connector getConnector() {
 		return player.getConnector();
-	}
-	
-	protected void sendMessage(String message) {
-		player.getConnector().sendMessage(message);
-	}
-	
-	protected void sendAvatar(ImageIcon avatar) {
-		player.getConnector().sendImage(avatar);
-	}
-	
-	protected String receiveMessage() {
-		return player.getConnector().receiveMessage();
-	}
-	
-	protected ImageIcon receiveAvatar() {
-		return player.getConnector().receiveImage();
 	}
 	
 	protected Server getServer() {

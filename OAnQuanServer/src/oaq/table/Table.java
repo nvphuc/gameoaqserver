@@ -329,7 +329,7 @@ public class Table extends Thread {
 				if (player.getGame().isReady)
 					ready = 1;
 				inforPlayers[i] = new InforPlayer(player.getUserName(),
-						player.getAvatar(), ready);
+						player.getAvatar(), player.getCredit(), ready);
 			} else {
 				inforPlayers[i] = null;
 			}
