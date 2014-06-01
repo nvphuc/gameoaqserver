@@ -12,24 +12,51 @@ public class PlayerProcessor extends Processor {
 
 	@Override
 	public void run() {
-		while (player.getStatus() == PlayerStatus.CONNECT) {
+		while (player.getStatus() == PlayerStatus.CONNECT
+				|| player.getStatus() == PlayerStatus.EDIT_ACCOUNT) {
 			handleMessage(getConnector().receiveMessage());
 		}
 		if (player.getStatus() == PlayerStatus.DISCONNECT) {
-			getServer().getPlayers().remove(player);
-			getConnector().disconnect();
+			disconnect();
 		}
 	}
 
 	@Override
 	protected void handleMessage(String message) {
-
+		System.out.println("PlayerProcessor : " + message);
+		
 		String[] args = message.split("@");
 
 		switch (args[0]) {
 
+		case "Register":
+			processRegister(args[1]);
+			break;
+			
 		case "Login":
 			processLogin(args[1]);
+			break;
+			
+		case "Edit":
+			getConnector().sendMessage("RSEdit");
+			player.setStatus(PlayerStatus.EDIT_ACCOUNT);
+			break;
+			
+		case "BackWaitingRoom":
+			getConnector().sendMessage("RSBack");
+			player.setStatus(PlayerStatus.CONNECT);
+			break;
+			
+		case "UpdateUserName":
+			processUpdateAccount(0, args[1]);
+			break;
+
+		case "UpdatePass":
+			processUpdateAccount(1, args[1]);
+			break;
+			
+		case "UpdateAvatar":
+			processUpdateAvatar();
 			break;
 
 		case "CreateTable":
@@ -38,10 +65,6 @@ public class PlayerProcessor extends Processor {
 
 		case "PlayRight":
 			processPlayRight();
-			break;
-
-		case "Register":
-			processRegister(args[1]);
 			break;
 
 		case "UpdataTables":
@@ -55,6 +78,44 @@ public class PlayerProcessor extends Processor {
 		default:
 			player.setStatus(PlayerStatus.DISCONNECT);
 			break;
+		}
+	}
+
+	private void processUpdateAvatar() {
+		boolean check = getConnector().receiveImage(player.getIdPlayer());
+		if(check) {
+			getConnector().sendMessage("OK");
+			databaseAccessor.updateAvatar(player.getIdPlayer());
+		}
+		else {
+			getConnector().sendMessage("ERROR");
+		}		
+	}
+
+	private void processUpdateAccount(int type, String args) {
+		String[] data = args.split(":");
+		
+		boolean check;
+		
+		switch(type) {
+		case 0:
+			check = databaseAccessor.updateUserName(player.getIdPlayer(), data[0], data[1]);
+			break;
+			
+		case 1:
+			check = databaseAccessor.updatePass(player.getIdPlayer(), data[0], data[1]);
+			break;
+			
+		default:
+			check = false;
+			break;
+		}
+		
+		if(check) {
+			getConnector().sendMessage("OK");
+		}
+		else {
+			getConnector().sendMessage("ERROR");
 		}
 	}
 
@@ -77,7 +138,7 @@ public class PlayerProcessor extends Processor {
 		for (Table tmpTable : getServer().getTables()) {
 			if (tmpTable.isAvailable()) {
 				tmpTable.addPlayer(player);
-				player.setStatus(PlayerStatus.PLAYGAME);
+				player.setStatus(PlayerStatus.PLAY_GAME);
 				getConnector().sendMessage(
 						"RSPlayRight@OK:" + player.getGame().orderNumber);
 				new GameProcessor(player);
@@ -91,7 +152,7 @@ public class PlayerProcessor extends Processor {
 		if(getTable(tableName) == null) {
 			Table table = new Table(getServer(), tableName);
 			table.addPlayer(player);
-			player.setStatus(PlayerStatus.PLAYGAME);
+			player.setStatus(PlayerStatus.PLAY_GAME);
 			getConnector().sendMessage(
 					"RSCreateTable@OK:" + player.getGame().orderNumber);
 			new GameProcessor(player);
@@ -104,7 +165,7 @@ public class PlayerProcessor extends Processor {
 		Table table = getTable(tableName);
 		if (table != null) {
 			if (table.addPlayer(player)) {
-				player.setStatus(PlayerStatus.PLAYGAME);;
+				player.setStatus(PlayerStatus.PLAY_GAME);;
 				getConnector().sendMessage("RSJoinTable@OK:" + player.getGame().orderNumber);
 				new GameProcessor(player);
 			}
@@ -115,23 +176,26 @@ public class PlayerProcessor extends Processor {
 	
 	private void processLogin(String args) {
 		String[] data = args.split(":");
-		player.setIdPlayer(databaseAccessor.accessDataBase(data[0], data[1]));
+		player.setIdPlayer(databaseAccessor.access(data[0], data[1]));
 		if (player.getIdPlayer() > 0) {
+
 			player.setUserName(data[0]);
 			getConnector().sendMessage("OK");
-			player.setMoney(databaseAccessor.getMoney(player.getIdPlayer()));
-			getConnector().sendMessage(player.getMoney() + "");
+
+			player.setCredit(databaseAccessor.getCredit(player.getIdPlayer()));
+			getConnector().sendMessage(player.getCredit() + "");
+
 			player.setAvatar(databaseAccessor.getAvatar(player.getIdPlayer()));
 			getConnector().sendImage(player.getAvatar());
+
 		} else {
 			getConnector().sendMessage("ERROR");
 		}
 	}
-
+	
 	private void processRegister(String args) {
 		String[] data = args.split(":");
-		boolean check = databaseAccessor.createAccount(data[0], data[1],
-				data[2]);
+		boolean check = databaseAccessor.createAccount(data[0], data[1],data[2]);
 		if (check)
 			getConnector().sendMessage("OK");
 		else

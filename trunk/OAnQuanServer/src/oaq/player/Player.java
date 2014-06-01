@@ -9,15 +9,14 @@ import oaq.newtype.PlayerStatus;
 import oaq.processor.PlayerProcessor;
 import oaq.server.Server;
 
-
 public class Player {
 	
 	private Server server;
-	private Connector connector;
+	private Connector connector;	
+	private int idPlayer;
 	private String userName;
 	private ImageIcon avatar;
-	private int money;
-	private int idPlayer;
+	private int credit;	
 	private GameVariables game;
 	private PlayerStatus status;
 
@@ -26,7 +25,7 @@ public class Player {
 		connector = new Connector(socket);
 		userName = "";
 		avatar = null;
-		money = 0;
+		credit = 0;
 		idPlayer = -1;
 		game = null;
 		status = PlayerStatus.CONNECT;
@@ -49,12 +48,19 @@ public class Player {
 		this.avatar = avatar;
 	}
 
-	public int getMoney() {
-		return money;
+	public int getCredit() {
+		return credit;
 	}
 
-	public void setMoney(int money) {
-		this.money = money;
+	public void setCredit(int Credit) {
+		this.credit = Credit;
+	}
+
+	public void addCredit(int amount) {
+		credit += amount;
+		if(credit < 0) {
+			credit = 0;
+		}
 	}
 
 	public int getIdPlayer() {

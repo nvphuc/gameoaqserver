@@ -1,5 +1,6 @@
 package oaq.connector;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -22,33 +23,41 @@ public class Connector {
 		}
 	}
 	
-	public void disconnect() {
+	public synchronized boolean disconnect() {
 		try {
 			oos.close();
 			ois.close();
 			socket.close();
+			return true;
 		} catch (IOException e) {
+			return false;
 		}
 	}
 
-	public void sendMessage(String message) {
+	public synchronized boolean sendMessage(String message) {
 		try {
 			oos.writeObject(message);
+			return true;
 		} catch (IOException e) {
+			return false;
 		}
 	}
 
-	public void sendImage(ImageIcon image) {
+	public synchronized boolean sendImage(ImageIcon image) {
 		try {
 			oos.writeObject(image);
+			return true;
 		} catch (IOException e) {
+			return false;
 		}
 	}
 	
-	public void sendInforTable(InforTable infor) {
+	public synchronized boolean sendInforTable(InforTable infor) {
 		try {
 			oos.writeObject(infor);
+			return true;
 		} catch (IOException e) {
+			return false;
 		}
 	}
 
@@ -60,13 +69,16 @@ public class Connector {
 		}
 		return message;
 	}
-
-	public ImageIcon receiveImage() {
+	
+	public boolean receiveImage(int id) {
 		try {
-			ImageIcon image = (ImageIcon) ois.readObject();
-			return image;
+			byte[] image = (byte[]) ois.readObject();
+			FileOutputStream outToHardDisk = new FileOutputStream("Avatars/" + id + ".png");
+			outToHardDisk.write(image);
+			outToHardDisk.close();
+			return true;
 		} catch (IOException | ClassNotFoundException e) {
-			return null;
+			return false;
 		}
 	}
 }

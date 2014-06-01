@@ -14,7 +14,7 @@ public class GameProcessor extends Processor {
 
 	@Override
 	public void run() {
-		while (player.getStatus() == PlayerStatus.PLAYGAME) {
+		while (player.getStatus() == PlayerStatus.PLAY_GAME) {
 			String message = getConnector().receiveMessage();
 			handleMessage(message);
 		}
